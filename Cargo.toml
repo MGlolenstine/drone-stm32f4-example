@@ -1,0 +1,41 @@
+[package]
+name = "stm32f4"
+version = "0.1.0"
+authors = ["qiuchengxuan <qiuchengxuan@gmail.com>"]
+edition = "2018"
+resolver = "2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "stm32f4"
+test = false
+doc = false
+
+[features]
+default = []
+std = [
+    "drone-core/std",
+    "drone-cortexm/std",
+    "drone-stm32-map/std",
+    "futures/std",
+]
+
+[dependencies]
+futures = { version = "0.3.0", default-features = false }
+drone-core = { path = "/home/qiubuyi/src/drone-os/drone-core" }
+
+[dependencies.drone-cortexm]
+path = "/home/qiubuyi/src/drone-os/drone-cortexm"
+features = ["bit-band", "floating-point-unit", "memory-protection-unit"]
+
+[dependencies.drone-stm32-map]
+path = "/home/qiubuyi/src/drone-os/drone-stm32-map"
+features = ["adc", "dma", "exti", "gpio", "i2c", "tim"]
+
+[profile.release]
+lto = true
+debug = true
+panic = "abort"
+codegen-units = 1
+opt-level = "z"
