@@ -2,12 +2,13 @@
 
 use drone_cortexm::{fib, reg::prelude::*, thr::prelude::*};
 use drone_stm32_map::periph::gpio::pin::{GpioPinMap, GpioPinPeriph};
-use drone_stm32_map::periph::gpio::{periph_gpio_b5, periph_gpio_b_head};
+use drone_stm32_map::periph::gpio::{periph_gpio_k3, periph_gpio_k_head};
 use drone_stm32_map::periph::sys_tick::{periph_sys_tick, SysTickPeriph};
 use drone_stm32_map::reg;
+use drone_cortexm::map::thr::*;
 use futures::prelude::*;
 
-use crate::{thread, thread::ThrsInit, Regs};
+use crate::{thread, thread::ThrsInit, thread::Rcc, thread::SysTick, Regs};
 
 const SYSCLK: u32 = 168_000_000;
 const HPRE: u32 = 1; // = SYSCLK
@@ -27,7 +28,7 @@ type RccRegs = (
     reg::flash::Acr<Srt>,
 );
 
-async fn setup(rcc: thread::Rcc, regs: RccRegs) {
+async fn setup(rcc: Rcc, regs: RccRegs) {
     let (cfgr, cir, cr, pllcfgr, flash_acr) = regs;
 
     rcc.enable_int();
@@ -67,7 +68,7 @@ async fn setup(rcc: thread::Rcc, regs: RccRegs) {
 async fn beacon<T: GpioPinMap>(
     pin: GpioPinPeriph<T>,
     systick: SysTickPeriph,
-    thread_systick: thread::SysTick,
+    thread_systick: SysTick,
 ) -> Result<(), TickOverflow> {
     let fiber = fib::new_fn(|| fib::Yielded(Some(1)));
     let mut tick_stream = thread_systick.add_pulse_try_stream(|| Err(TickOverflow), fiber);
@@ -105,14 +106,14 @@ pub fn handler(reg: Regs, thr_init: ThrsInit) {
 
     reg.rcc_apb1enr.pwren.set_bit();
 
-    let gpio_b = periph_gpio_b_head!(reg);
-    gpio_b.rcc_busenr_gpioen.set_bit();
-    let gpio_b5 = periph_gpio_b5!(reg);
-    gpio_b5.gpio_moder_moder.write_bits(0b01);
-    gpio_b5.gpio_bsrr_br.set_bit();
+    let gpio_k = periph_gpio_k_head!(reg);
+    gpio_k.rcc_busenr_gpioen.set_bit();
+    let gpio_k3 = periph_gpio_k3!(reg);
+    gpio_k3.gpio_moder_moder.write_bits(0b01);
+    gpio_k3.gpio_bsrr_br.set_bit();
 
     let sys_tick = periph_sys_tick!(reg);
-    beacon(gpio_b5, sys_tick, thread.sys_tick).root_wait().expect("beacon fail");
+    beacon(gpio_k3, sys_tick, thread.sys_tick).root_wait().expect("beacon fail");
 
     // Enter a sleep state on ISR exit.
     reg.scb_scr.sleeponexit.set_bit();

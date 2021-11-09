@@ -1,19 +1,36 @@
-[memory]
-ram = { size = "128K",  origin = 0x20000000 }
-flash = { size = "1M", origin = 0x08000000 }
+[memory.flash]
+size = "2M"
+origin = 0x08000000
+
+[memory.ram]
+size = "324K"
+origin = 0x20000000
 
 [heap.main]
-size = "64K"
+size = "162K"
 pools = [
-    { block = "4", capacity = 755 },
-    { block = "20", capacity = 377 },
-    { block = "108", capacity = 97 },
-    { block = "324", capacity = 38 },
-    { block = "708", capacity = 17 },
-    { block = "1304", capacity = 8 },
-    { block = "2148", capacity = 3 },
-    { block = "3276", capacity = 1 },
+    { block = "4", capacity = 1916 },
+    { block = "44", capacity = 429 },
+    { block = "268", capacity = 98 },
+    { block = "812", capacity = 37 },
+    { block = "1784", capacity = 18 },
+    { block = "3292", capacity = 8 },
+    { block = "5432", capacity = 3 },
+    { block = "8296", capacity = 1 },
 ]
 
 [linker]
 platform = "arm"
+
+[probe]
+gdb-client-command = "gdb-multiarch"
+
+[probe.openocd]
+command = "openocd"
+port = 3333
+arguments = ["-f", "/usr/share/openocd/scripts/interface/stlink.cfg", "-f", "/usr/share/openocd/scripts/target/stm32f4x.cfg"]
+
+[log.swo]
+reset-freq = 16000000
+baud-rate = 115200
+serial-endpoint = "/dev/ttyACM0"
